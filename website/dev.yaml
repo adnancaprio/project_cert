@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: php-app-deployment
+  namespace: dev # Explicitly define the namespace
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: my-php-app
+  template:
+    metadata:
+      labels:
+        app: my-php-app
+    spec:
+      containers:
+      - name: my-container
+        image: apand84/php-app/your-image-name
+        ports:
+        - containerPort: 80

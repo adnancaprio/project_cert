@@ -19,3 +19,12 @@ If you are a beginner and would like me to explain something in the code, or if 
 ## Lisence
 
 MIT
+
+## DevOps
+Connecting to EC2
+1. Locally, run
+- chmod 400 ~/.ssh/DevOpsProj.pem
+- ssh -i ~/.ssh/DevOpsProj.pem ubuntu@3.131.141.176
+
+2. In ssh, run
+-  sudo apt update

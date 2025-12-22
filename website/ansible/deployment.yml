@@ -26,22 +26,22 @@
           - "Cluster   : {{ eks_cluster }}"
           - "Region    : {{ aws_region }}"
 
-    - name: Apply inventory manifests (configmaps, secrets, etc.)
-      ansible.builtin.shell: |
-        set -e
-        if [ -d "{{ inventory_dir }}" ]; then
-          echo "Applying inventory from {{ inventory_dir }}"
-          /usr/local/bin/kubectl apply -n {{ namespace }} -f {{ inventory_dir }}
-        else
-          echo "Inventory directory not found: {{ inventory_dir }}"
-        fi
+    - name: Apply Kubernetes manifests
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ namespace }}"
+        src: "{{ item }}"
+      with_fileglob:
+        - "{{ k8s_dir }}/*.yaml"
       register: inventory_output
       changed_when: "'created' in inventory_output.stdout or 'configured' in inventory_output.stdout"
 
     - name: Apply Kubernetes manifests
-      ansible.builtin.shell: |
-        set -e
-        echo "Applying k8s manifests from {{ k8s_dir }}"
-        /usr/local/bin/kubectl apply -n {{ namespace }} -f {{ k8s_dir }}
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ namespace }}"
+        src: "{{ item }}"
+      with_fileglob:
+        - "{{ k8s_dir }}/*.yaml"
       register: k8s_output
       changed_when: "'created' in k8s_output.stdout or 'configured' in k8s_output.stdout"

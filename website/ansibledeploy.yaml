@@ -1,0 +1,9 @@
+---
+- hosts: localhost
+  connection: local
+  vars:
+    env: "{{ env }}"
+    app_version: "{{ app_version }}"
+    - name: Apply Kubernetes manifests for {{ env }}
+      command: >
+        kubectl apply -f test.yaml

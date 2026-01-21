@@ -1,0 +1,9 @@
+[eks_test]
+eks-test
+
+[eks_test:vars]
+aws_region=eu-west-2
+eks_cluster_name=eks_cluster-demo
+kube_namespace=test
+k8s_manifest_dir=./website
+

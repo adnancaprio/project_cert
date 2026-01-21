@@ -1,0 +1,79 @@
+pipeline {
+    agent any
+
+    environment {
+        DOCKER_IMAGE = "apand84/php-app"
+        DOCKER_CREDENTIALS_ID = 'dockerhub-login-details'
+    }
+    parameters {
+        
+        choice(name: 'NAMESPACE', choices: ['dev', 'test', 'prod'], description: 'Target K8s Namespace')
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+               git credentialsId: 'GITHUB_CREDENTIAL', url: 'https://github.com/nitesh4511/projCert/'
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    def builtImage = docker.build("${DOCKER_IMAGE}:${env.BUILD_NUMBER}","./website")
+                    builtImage.tag("latest")
+                    dockerImage = builtImage
+                }
+            }
+        }
+
+        stage('Test (Optional Placeholder)') {
+            steps {
+                sh 'echo "Running tests... (Add your PHP unit tests here)"'
+                // Example of running tests inside the built container:
+                // dockerImage.inside {
+                //     sh 'php artisan test'
+                // }
+            }
+        }
+
+        stage('Push Image to Docker Hub') {
+            steps {
+                script {
+                    docker.withRegistry('https://registry.hub.docker.com', DOCKER_CREDENTIALS_ID) {
+                        dockerImage.push("${env.BUILD_NUMBER}")
+                        dockerImage.push("latest")
+                    }
+                }
+            }
+        }
+        stage('Deploy Dev') {
+            steps {
+                script {
+                    sh "ansible-playbook -i ./website/envs/dev/inventory/inventory.ini ./website/ansible/deployment.yml"
+                }
+            }
+        }
+
+        stage('Deploy Test') {
+            steps {
+                script {
+                    sh "ansible-playbook -i ./website/envs/test/inventory/inventory.ini ./website/ansible/deployment.yml"
+                }
+            }
+        }
+
+        stage('Deploy Prod') {
+            when {
+                
+                branch 'master'
+            }
+            steps {
+                script {
+                    
+                    sh "ansible-playbook -i ./website/envs/prod/inventory/inventory.ini ./website/ansible/deployment.yml"
+                }
+            }
+        }
+    }
+}

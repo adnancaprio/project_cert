@@ -1,0 +1,47 @@
+---
+- name: Deploy to EKS namespace using env-specific manifests
+  hosts: localhost
+  connection: local
+  gather_facts: no
+
+  vars:
+    target_env: "{{ env | default('dev') }}"
+    eks_cluster: "{{ cluster_name | default('eks_cluster-demo') }}"
+    aws_region: "{{ region | default('eu-west-2') }}"
+
+    env_dir: "envs/{{ target_env }}"
+    inventory_dir: "{{ env_dir }}/inventory"
+    k8s_dir: "{{ env_dir }}/k8s"
+    namespace: "{{ target_env }}"  
+
+  tasks:
+    - name: Show deployment parameters
+      debug:
+        msg:
+          - "Environment: {{ target_env }}"
+          - "Namespace : {{ namespace }}"
+          - "ENV_DIR   : {{ env_dir }}"
+          - "Inventory : {{ inventory_dir }}"
+          - "K8S_DIR   : {{ k8s_dir }}"
+          - "Cluster   : {{ eks_cluster }}"
+          - "Region    : {{ aws_region }}"
+
+    - name: Apply Kubernetes manifests
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ namespace }}"
+        src: "{{ item }}"
+      with_fileglob:
+        - "{{ k8s_dir }}/*.yaml"
+      register: inventory_output
+      changed_when: "'created' in inventory_output.stdout or 'configured' in inventory_output.stdout"
+
+    - name: Apply Kubernetes manifests
+      kubernetes.core.k8s:
+        state: present
+        namespace: "{{ namespace }}"
+        src: "{{ item }}"
+      with_fileglob:
+        - "{{ k8s_dir }}/*.yaml"
+      register: k8s_output
+      changed_when: "'created' in k8s_output.stdout or 'configured' in k8s_output.stdout"
